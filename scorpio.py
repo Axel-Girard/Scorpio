@@ -4,6 +4,10 @@ goal = 300
 nPop = 10000
 nGene = 6
 signs = []
+material = "acier"
+density = 7850
+young = 210
+poisson = 0,30
 
 # define signes
 def setSign():
