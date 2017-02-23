@@ -3,12 +3,13 @@ import random
 import math
 
 goal = 300
-nPop = 10000
+nPop = 10
 nGene = 6
-density = 500
-E = 500
-poisson = 0.33
-Df = 0.05
+nGeneration = 50
+density = random.uniform(300,2000)
+E = random.uniform(10,1000)
+poisson = random.uniform(0,0.5)
+Df = random.uniform(0,0.25)
 g = 9.81
 
 def ressort(E,v):
@@ -60,6 +61,7 @@ def maxFlechBras(F,Lb,E,I):
 
 # generate first generation
 def firstGen():
+    generation = []
     for i in range(nPop):
         # 0.angle
         # 1.width of bow
@@ -77,45 +79,34 @@ def firstGen():
             a = random.uniform(0,20)
         individu.append(a)
         individu.append(random.uniform(0,20))
-
-        K = ressort(E, poisson)
-        Lv = longeurAVide(individu[1], individu[4])
-        Ld = longueurDeplacement(individu[5],Lv)
-        mp = masseProjectil(density,Df,individu[5])
-        V = velocite(K,Ld,mp)
-        P = porte(V,g,individu[0])
-        #print(" porté= ",round(P,3))
-        Ec = impact(mp,V)
-        #print("impact= ",round(V,3))
-        I = momentQuadratique(individu[2],individu[3])
-        F = forceTraction(K, Ld)
-        f = maxFlechBras(F,individu[1],E,I)
-
-        if rating(P, Ec, individu):
-            print("Ld=", Ld)
-
-            tir = True
-
-            if Ld > f:
-                print("Le bras casse! ",Ld, f)
-                tir = False
-            if Lv > individu[5]:
-                print("Pas de tir: Lv>Lf")
-                tir = False
-            if individu[4] > individu[1]:
-                print("Pas de tir: Lc>La")
-                tir = False
-            return i
+        generation.append(individu)
+    return generation
 
 # compute score of individu
 def rating(porte, impact, individu):
-    if porte >= goal:
+    K = ressort(E, poisson)
+    Lv = longeurAVide(individu[1], individu[4])
+    Ld = longueurDeplacement(individu[5],Lv)
+    mp = masseProjectil(density,Df,individu[5])
+    V = velocite(K,Ld,mp)
+    P = porte(V,g,individu[0])
+    Ec = impact(mp,V)
+    I = momentQuadratique(individu[2],individu[3])
+    F = forceTraction(K, Ld)
+    f = maxFlechBras(F,individu[1],E,I)
+
+    if abs(porte - goal) >= 5:
         for i in range(nGene):
             print(individu[i])
         print(" porté= ", round(porte, 3))
         print("impact= ", round(impact,3))
-        return True
-    return False
+
+        if Ld > f:
+            print("Le bras casse! ",Ld, f)
+        if Lv > individu[5]:
+            print("Pas de tir: Lv>Lf")
+        if individu[4] > individu[1]:
+            print("Pas de tir: Lc>La")
 
 def fin(iteration):
     if iteration is not None:
@@ -124,8 +115,14 @@ def fin(iteration):
             return
     print("No scoprio found, sorry :'(")
 
+def nextGen(pop):
+    print(pop)
+    return pop
+
 # main function that run others
 def main():
-    fin(firstGen())
+    pop = firstGen()
+    for i in range(nGeneration):
+        pop = nextGen(pop)
 
 main()
