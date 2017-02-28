@@ -2,15 +2,26 @@ from random import randint
 import random
 import math
 
+# La distance à atteindre
 goal = 300
-nPop = 10
+# Le nombre d'individu par population
+nPop = 6
+# Le nombre de gène
 nGene = 6
-nGeneration = 50
+# le nombre de génération souhaitée
+nGeneration = 2
+# Masse volumique
 density = random.uniform(300,2000)
+# Module de Young
 E = random.uniform(10,1000)
+# Coeficient de Poisson
 poisson = random.uniform(0,0.5)
-Df = random.uniform(0,0.25)
+# Diamètre de la flèche
+Df = random.uniform(0,10)
+# Gravité, je choisit qu'on est sur la Terre et pas ailleurs
 g = 9.81
+
+offset = 50
 
 def ressort(E,v):
     res = 1/3
@@ -61,7 +72,7 @@ def maxFlechBras(F,Lb,E,I):
 
 # generate first generation
 def firstGen():
-    generation = []
+    generation = ""
     for i in range(nPop):
         # 0.angle
         # 1.width of bow
@@ -69,44 +80,70 @@ def firstGen():
         # 3.height
         # 4.width of rope
         # 5.width of arrow
-        individu = []
-        individu.append(random.uniform(0,90))
-        individu.append(random.uniform(0,20))
-        individu.append(random.uniform(0,20))
-        individu.append(random.uniform(0,20))
-        a = random.uniform(0,20)
-        while math.pow(individu[1], 2)-(0.25*math.pow(a,2)) <= 0:
-            a = random.uniform(0,20)
-        individu.append(a)
-        individu.append(random.uniform(0,20))
-        generation.append(individu)
+        individu = "0,"
+        individu += "{0},".format(random.uniform(0,90))
+        tmp = random.uniform(0,20)
+        individu += "{0},".format(tmp)
+        individu += "{0},".format(random.uniform(0,20))
+        individu += "{0},".format(random.uniform(0,20))
+        tmpp = random.uniform(0,20)
+        while math.pow(tmp, 2)-(0.25*math.pow(tmpp,2)) <= 0:
+            tmpp = random.uniform(0,20)
+        individu += "{0},".format(tmpp)
+        individu += "{0}".format(random.uniform(0,20))
+        generation += individu + ";"
     return generation
 
 # compute score of individu
-def rating(porte, impact, individu):
-    K = ressort(E, poisson)
-    Lv = longeurAVide(individu[1], individu[4])
-    Ld = longueurDeplacement(individu[5],Lv)
-    mp = masseProjectil(density,Df,individu[5])
-    V = velocite(K,Ld,mp)
-    P = porte(V,g,individu[0])
-    Ec = impact(mp,V)
-    I = momentQuadratique(individu[2],individu[3])
-    F = forceTraction(K, Ld)
-    f = maxFlechBras(F,individu[1],E,I)
+def rating(individu):
+    gene = []
+    for itIndi in individu.split(',')[1:]:
+        gene.append(itIndi)
+        print(round(float(itIndi),3))
+    if len(gene) is nGene:
+        K = ressort(E, poisson)
+        Lv = longeurAVide(float(gene[1]), float(gene[4]))
+        Ld = longueurDeplacement(float(gene[5]),Lv)
+        mp = masseProjectil(density,Df,float(gene[5]))
+        V = velocite(K,Ld,mp)
+        P = porte(V,g,float(gene[0]))
+        Ec = impact(mp,V)
+        I = momentQuadratique(float(gene[2]),float(gene[3]))
+        F = forceTraction(K, Ld)
+        f = maxFlechBras(F,float(gene[1]),E,I)
 
-    if abs(porte - goal) >= 5:
-        for i in range(nGene):
-            print(individu[i])
-        print(" porté= ", round(porte, 3))
-        print("impact= ", round(impact,3))
+        # if abs(P - goal) <= 5:
+        #     print("   -------   Less than 5 meters ", P, "   -------   ")
+        #     for i in range(nGene):
+        #         print(individu[i])
+        #
+        # print(" porté= ", round(P, 3))
+        # print("impact= ", round(Ec,3))
+        #
+        # if Ld > f:
+        #     print("Le bras casse! ",Ld, f)
+        # if Lv > individu[5]:
+        #     print("Pas de tir: Lv>Lf")
+        # if individu[4] > individu[1]:
+        #     print("Pas de tir: Lc>La")
+        # print("Portee: {0} Energie cinitique {1}".format(round(P,3),round(Ec,3)))
+        return abs(P - goal)
+    return 0
 
-        if Ld > f:
-            print("Le bras casse! ",Ld, f)
-        if Lv > individu[5]:
-            print("Pas de tir: Lv>Lf")
-        if individu[4] > individu[1]:
-            print("Pas de tir: Lc>La")
+# Generate next population
+def nextGen(pop):
+    population = pop
+    rated = ""
+    for individu in population.split(';'):
+        rated += "{0}, ".format(round(rating(individu),3))
+        for gene in individu.split(',')[1:]:
+            rated += "{0}, ".format(round(float(gene), 3))
+        rated = rated[:-1]
+        rated += ";"
+    rated = rated[:-1]
+    rate = sorted(rated.split(';'))[1:]
+    print(rate)
+    return population
 
 def fin(iteration):
     if iteration is not None:
@@ -115,14 +152,14 @@ def fin(iteration):
             return
     print("No scoprio found, sorry :'(")
 
-def nextGen(pop):
-    print(pop)
-    return pop
-
 # main function that run others
 def main():
+    print("Masse volumique: {0}".format(round(density,3)))
+    print("Module de Young: {0}".format(round(E,3)))
+    print("Coef de Poisson: {0}".format(round(poisson,3)))
     pop = firstGen()
     for i in range(nGeneration):
+        print("{0} generation".format(i+1))
         pop = nextGen(pop)
 
 main()
