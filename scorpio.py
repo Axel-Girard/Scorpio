@@ -1,11 +1,13 @@
 from random import randint
 import random
 import math
+import matplotlib.pyplot as plt
+import numpy
 
 goal = 300
 nPop = 10
 nGene = 6
-nGeneration = 50
+nGeneration = 3
 density = random.uniform(300,2000)
 E = random.uniform(10,1000)
 poisson = random.uniform(0,0.5)
@@ -80,10 +82,11 @@ def firstGen():
         individu.append(a)
         individu.append(random.uniform(0,20))
         generation.append(individu)
+        rating(individu)
     return generation
 
-# compute score of individu
-def rating(porte, impact, individu):
+# compute porte, energy and score of individu
+def rating(individu):
     K = ressort(E, poisson)
     Lv = longeurAVide(individu[1], individu[4])
     Ld = longueurDeplacement(individu[5],Lv)
@@ -95,18 +98,25 @@ def rating(porte, impact, individu):
     F = forceTraction(K, Ld)
     f = maxFlechBras(F,individu[1],E,I)
 
-    if abs(porte - goal) >= 5:
-        for i in range(nGene):
-            print(individu[i])
-        print(" porté= ", round(porte, 3))
-        print("impact= ", round(impact,3))
+    individu.append(P)
+    individu.append(Ec)
 
-        if Ld > f:
-            print("Le bras casse! ",Ld, f)
-        if Lv > individu[5]:
-            print("Pas de tir: Lv>Lf")
-        if individu[4] > individu[1]:
-            print("Pas de tir: Lc>La")
+    #
+    score = abs(goal-P) * 1000 + Ec/2
+    individu.append(score)
+
+    # if abs(P - goal) >= 5:
+    #     for i in range(nGene):
+    #         print(individu[i])
+    #     print(" porté= ", round(P, 3))
+    #     print("impact= ", round(Ec,3))
+    #
+    #     if Ld > f:
+    #         print("Le bras casse! ",Ld, f)
+    #     if Lv > individu[5]:
+    #         print("Pas de tir: Lv>Lf")
+    #     if individu[4] > individu[1]:
+    #         print("Pas de tir: Lc>La")
 
 def fin(iteration):
     if iteration is not None:
@@ -115,14 +125,107 @@ def fin(iteration):
             return
     print("No scoprio found, sorry :'(")
 
-def nextGen(pop):
-    print(pop)
+# affiche un gene de la population
+def printGen(pop, gene):
+    for indi in pop:
+        print(indi[gene])
     return pop
+
+def nextGen(pop):
+    fitnesse(pop)
+    return pop
+
+# select parents then initiate croisement
+def fitnesse(pop):
+    total = 0
+    for indi in pop:
+        total += indi[6]
+    offset = random.uniform(0,total/4)
+    newPop = []
+    while len(newPop) <= nPop:
+        parent1 = getIndiFromOffset(pop, offset, total)
+        offset = (offset + offset) % total
+        parent2 = getIndiFromOffset(pop,offset, total)
+        while parent1 == parent2:
+            offset = (offset + offset) % total
+            parent2 = getIndiFromOffset(pop,offset, total)
+        offset += offset + offset
+        newPop.append(croisement(parent1, parent2))
+
+    return newPop
+
+# croise les parents
+def croisement(parent1, parent2):
+    croise = randint(0,5)
+    individu = []
+    for i in range(croise):
+        individu.append(parent1[i])
+    for i in range(croise, nGene):
+        individu.append(parent2[i])
+    # launch mutation
+    isMutation = randint(50,70)
+    if randint(0,100) > isMutation:
+        mutation(individu)
+    return individu
+
+def mutation(individu):
+    gene = randint(0,nGene - 1)
+    individu[gene] = random.uniform(0,20)
+
+# return individu form offset beside porte
+def getIndiFromOffset(pop,offset, maximum):
+    porte = 0
+    for indi in pop:
+        porte = (porte + indi[6]) % maximum
+        if porte >= offset:
+            return indi
+    return pop[0]
 
 # main function that run others
 def main():
-    pop = firstGen()
+    print('nGene', nGene)
+    print('nPop', nPop)
+    print('nGeneration', nGeneration)
+    print('density', density)
+    print('E', E)
+    print('poisson', poisson)
+    print('Df', Df)
+
+    pop = []
+    pop.append(firstGen())
+    currentPopulation = pop[0]
+    portes = []
+    puissances = []
+    notes = []
+
+    for j in range(nPop):
+        portes.append(pop[0][j][6])
+        puissances.append(pop[0][j][7])
+        notes.append(pop[0][j][8])
+
     for i in range(nGeneration):
-        pop = nextGen(pop)
+        pop.append(nextGen(currentPopulation))
+        currentPopulation = pop[len(pop)-1]
+        for j in range(nPop):
+            portes.append(pop[i][j][6])
+            puissances.append(pop[i][j][7])
+            notes.append(pop[i][j][8])
+
+    plt.subplot(2,2,1)
+    plt.plot(portes)
+    plt.title('Porte')
+
+    plt.subplot(2,2,2)
+    plt.plot(puissances)
+    plt.title('Puissance')
+
+    plt.subplot(2,2,3)
+    plt.plot(numpy.var(notes))
+    plt.title('Variance')
+
+    plt.subplot(2,2,4)
+    plt.plot(notes)
+    plt.title('Note')
+    plt.show()
 
 main()
