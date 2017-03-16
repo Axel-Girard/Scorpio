@@ -7,7 +7,7 @@ import numpy
 goal = 300
 nPop = 10
 nGene = 6
-nGeneration = 3
+nGeneration = 50
 density = random.uniform(300,2000)
 E = random.uniform(10,1000)
 poisson = random.uniform(0,0.5)
@@ -22,6 +22,8 @@ def ressort(E,v):
     return res
 
 def longeurAVide(Lb, Lc):
+    Lb = float(Lb)
+    Lb = float(Lc)
     res = math.sqrt(math.pow(Lb, 2)-(0.25*math.pow(Lc,2)))
     return res
 
@@ -132,8 +134,10 @@ def printGen(pop, gene):
     return pop
 
 def nextGen(pop):
-    fitnesse(pop)
-    return pop
+    newPop = fitnesse(pop)
+    for i in range(len(newPop)):
+        rating(newPop[i])
+    return newPop
 
 # select parents then initiate croisement
 def fitnesse(pop):
@@ -197,34 +201,40 @@ def main():
     portes = []
     puissances = []
     notes = []
-
-    for j in range(nPop):
-        portes.append(pop[0][j][6])
-        puissances.append(pop[0][j][7])
-        notes.append(pop[0][j][8])
+    moyPortes = []
+    moyPuissances = []
+    moyNotes = []
+    varNotes = []
 
     for i in range(nGeneration):
-        pop.append(nextGen(currentPopulation))
-        currentPopulation = pop[len(pop)-1]
         for j in range(nPop):
             portes.append(pop[i][j][6])
             puissances.append(pop[i][j][7])
             notes.append(pop[i][j][8])
+        moyPortes.append(numpy.mean(portes))
+        portes = []
+        moyPuissances.append(numpy.mean(puissances))
+        puissances = []
+        moyNotes.append(numpy.mean(notes))
+        varNotes.append(numpy.var(notes))
+        notes = []
+        pop.append(nextGen(currentPopulation))
+        currentPopulation = pop[len(pop)-1]
 
     plt.subplot(2,2,1)
-    plt.plot(portes)
+    plt.plot(moyPortes)
     plt.title('Porte')
 
     plt.subplot(2,2,2)
-    plt.plot(puissances)
+    plt.plot(moyPuissances)
     plt.title('Puissance')
 
     plt.subplot(2,2,3)
-    plt.plot(numpy.var(notes))
+    plt.plot(varNotes)
     plt.title('Variance')
 
     plt.subplot(2,2,4)
-    plt.plot(notes)
+    plt.plot(moyNotes)
     plt.title('Note')
     plt.show()
 
