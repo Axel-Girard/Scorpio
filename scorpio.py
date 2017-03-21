@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import numpy
 
 goal = 300
-nPop = 10
+nPop = 500
 nGene = 6
 nGeneration = 50
-density = random.uniform(300,2000)
+density = random.uniform(10,1000)
 E = random.uniform(10,1000)
 poisson = random.uniform(0,0.5)
 Df = random.uniform(0,0.25)
@@ -87,7 +87,7 @@ def firstGen():
         rating(individu)
     return generation
 
-# compute porte, energy and score of individu
+# compute scope, energy and score of individu
 def rating(individu):
     K = ressort(E, poisson)
     Lv = longeurAVide(individu[1], individu[4])
@@ -103,31 +103,11 @@ def rating(individu):
     individu.append(P)
     individu.append(Ec)
 
-    #
-    score = abs(goal-P) * 1000 + Ec/2
+    score = 1/abs(goal-P) * 1000 - 1/Ec
+    #print("score :", score)
     individu.append(score)
 
-    # if abs(P - goal) >= 5:
-    #     for i in range(nGene):
-    #         print(individu[i])
-    #     print(" porté= ", round(P, 3))
-    #     print("impact= ", round(Ec,3))
-    #
-    #     if Ld > f:
-    #         print("Le bras casse! ",Ld, f)
-    #     if Lv > individu[5]:
-    #         print("Pas de tir: Lv>Lf")
-    #     if individu[4] > individu[1]:
-    #         print("Pas de tir: Lc>La")
-
-def fin(iteration):
-    if iteration is not None:
-        if iteration >= 0.0:
-            print("GG, you did it in",iteration,"iterations!")
-            return
-    print("No scoprio found, sorry :'(")
-
-# affiche un gene de la population
+# display a gene of the population
 def printGen(pop, gene):
     for indi in pop:
         print(indi[gene])
@@ -143,7 +123,7 @@ def nextGen(pop):
 def fitnesse(pop):
     total = 0
     for indi in pop:
-        total += indi[6]
+        total += indi[8]
     offset = random.uniform(0,total/4)
     newPop = []
     while len(newPop) <= nPop:
@@ -153,12 +133,13 @@ def fitnesse(pop):
         while parent1 == parent2:
             offset = (offset + offset) % total
             parent2 = getIndiFromOffset(pop,offset, total)
+        #print(parent1)
         offset += offset + offset
         newPop.append(croisement(parent1, parent2))
 
     return newPop
 
-# croise les parents
+# cross parents
 def croisement(parent1, parent2):
     croise = randint(0,5)
     individu = []
@@ -167,21 +148,22 @@ def croisement(parent1, parent2):
     for i in range(croise, nGene):
         individu.append(parent2[i])
     # launch mutation
-    isMutation = randint(50,70)
+    isMutation = randint(90,95)
     if randint(0,100) > isMutation:
         mutation(individu)
     return individu
 
+# transform individu
 def mutation(individu):
     gene = randint(0,nGene - 1)
-    individu[gene] = random.uniform(0,20)
+    individu[gene] = random.uniform(0,2000)
 
 # return individu form offset beside porte
 def getIndiFromOffset(pop,offset, maximum):
-    porte = 0
+    rate = 0
     for indi in pop:
-        porte = (porte + indi[6]) % maximum
-        if porte >= offset:
+        rate = (rate + indi[8]) % maximum
+        if rate >= offset:
             return indi
     return pop[0]
 
